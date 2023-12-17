@@ -1,6 +1,9 @@
 pub mod core;
 pub mod flask;
 
+#[cfg(feature = "jinja")]
+pub mod jinja;
+
 #[cfg(test)]
 mod tests {
     use std::{collections::HashMap, io::Read};
