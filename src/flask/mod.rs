@@ -26,12 +26,12 @@ pub struct CantBind;
 
 impl App {
     /// Makes a new app
-    /// 
+    ///
     /// Equivalent to
     /// ```python
     /// app = Flask("name")
     /// ````
-    /// 
+    ///
     /// # Examples
     /// ```rust
     /// # use rustedflask::flask::App;

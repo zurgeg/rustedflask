@@ -78,7 +78,7 @@ mod tests {
         variables.insert("variable", "works".to_string());
         let rendered = match render_template_string(template, variables) {
             Err(why) => return Err(why),
-            Ok(response) => response
+            Ok(response) => response,
         };
         assert_eq!(rendered, "works".to_string());
         Ok(())

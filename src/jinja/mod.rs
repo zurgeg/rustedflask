@@ -2,20 +2,19 @@ mod consts;
 
 use regex::Regex;
 
-use std::{collections::HashMap, path::Path, fs::File, io::Read};
-
+use std::{collections::HashMap, fs::File, io::Read, path::Path};
 
 /// An error from within Jinja.
-/// 
+///
 /// This should be raised as an issue
 #[derive(Debug)]
 pub enum InternalJinjaError {
     /// A parser regex couldn't be read
-    CantReadRegex(regex::Error)
+    CantReadRegex(regex::Error),
 }
 
 /// An error with Jinja
-/// 
+///
 /// This can come from your own code,
 /// or from Jinja itself (see `InternalJinjaError`)
 #[derive(Debug)]
@@ -32,22 +31,27 @@ pub enum JinjaError {
 }
 
 /// Renders a template from a given string
-pub fn render_template_string(template: String, variables: HashMap<&str, String>) -> Result<String, JinjaError> {
+pub fn render_template_string(
+    template: String,
+    variables: HashMap<&str, String>,
+) -> Result<String, JinjaError> {
     let mut rendered = String::new();
     let simple_variable = match Regex::new(consts::REPLACE) {
-        Err(why) => return Err(JinjaError::InternalJinjaError(
-            InternalJinjaError::CantReadRegex(why)
-        )),
-        Ok(regex) => regex
+        Err(why) => {
+            return Err(JinjaError::InternalJinjaError(
+                InternalJinjaError::CantReadRegex(why),
+            ))
+        }
+        Ok(regex) => regex,
     };
     for entry in simple_variable.captures_iter(&template) {
         let variable = &entry;
         let variable_value = match variables.get(&variable["variable"]) {
             None => return Err(JinjaError::NoSuchVariable),
-            Some(val) => val
+            Some(val) => val,
         };
         rendered = template.replace(&variable[0], variable_value);
-    };
+    }
     Ok(rendered)
 }
 
@@ -57,14 +61,24 @@ pub fn render_template(file: &str, variables: HashMap<&str, String>) -> Result<S
     // a string const, and the value is more likely to be dynamically generated
     let fpath = Path::new("templates").join(file);
     let mut opened_file = match File::open(fpath) {
-        Err(why) => return Err(JinjaError::Other(format!("can't open file, error: {}", why))),
-        Ok(file) => file
+        Err(why) => {
+            return Err(JinjaError::Other(format!(
+                "can't open file, error: {}",
+                why
+            )))
+        }
+        Ok(file) => file,
     };
 
     let mut contents = String::new();
 
     match opened_file.read_to_string(&mut contents) {
-        Err(why) => return Err(JinjaError::Other(format!("couldn't read file, error: {}", why))),
+        Err(why) => {
+            return Err(JinjaError::Other(format!(
+                "couldn't read file, error: {}",
+                why
+            )))
+        }
         Ok(_) => return render_template_string(contents, variables),
     }
 }
