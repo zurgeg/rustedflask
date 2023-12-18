@@ -30,8 +30,10 @@ mod tests {
     #[test]
     fn test_readablevec() -> Result<(), std::io::Error> {
         let vec = vec![b'f', b'o', b'o'];
-        let buf = &mut [0 as u8; 3];
-        let mut readablevec = ReadableVec { vector: &mut vec.clone() };
+        let buf = &mut [0_u8; 3];
+        let mut readablevec = ReadableVec {
+            vector: &mut vec.clone(),
+        };
         readablevec.read(buf)?;
         assert_eq!(vec[0], buf[0]);
         assert_eq!(vec[1], buf[1]);
@@ -49,10 +51,12 @@ mod tests {
             reason: Box::new(b"OK".to_owned()),
             statuscode: core::http::HttpStatusCodes::NoContent,
             headers: headers,
-            content: b"".into()
+            content: b"".into(),
         };
         let mut resp_bytes: Vec<u8> = example_response.into();
-        let resp_parsed = core::http::HTTPResponse::read_http_response(&mut ReadableVec{vector: &mut resp_bytes});
+        let resp_parsed = core::http::HTTPResponse::read_http_response(&mut ReadableVec {
+            vector: &mut resp_bytes,
+        });
         if resp_parsed.is_err() {
             return Err(resp_parsed.unwrap_err());
         }

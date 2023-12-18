@@ -1,27 +1,31 @@
 use crate::core::http::{HTTPRequest, HTTPResponse, HttpStatusCodes};
-use std::{thread, net::{TcpStream, TcpListener}, io::Write};
+use std::{
+    io::Write,
+    net::{TcpListener, TcpStream},
+    thread,
+};
 
-pub type RouteFn = fn (request: HTTPRequest) -> HTTPResponse;
+pub type RouteFn = fn(request: HTTPRequest) -> HTTPResponse;
 
 #[derive(Clone)]
 struct Route {
     pub path: String,
-    pub func: RouteFn
+    pub func: RouteFn,
 }
 
 pub struct App {
     pub name: String,
-    routes: Vec<Route>
+    routes: Vec<Route>,
 }
 
 pub struct CantBind;
 
 impl App {
     pub fn new(name: String) -> App {
-        return App {
+        App {
             name,
-            routes: Vec::new()
-        };
+            routes: Vec::new(),
+        }
     }
 
     fn handle(&mut self, request: HTTPRequest, mut client: TcpStream) {
@@ -34,62 +38,65 @@ impl App {
         }
 
         let route = self.find_route_for_path(route_string.clone().unwrap().as_str());
-        
+
         if route.is_none() {
-            let notfoundroute = self.find_route_for_path("!404");
-            if notfoundroute.is_some() {
+            let notfoundroute_wrapped = self.find_route_for_path("!404");
+            if let Some(notfoundroute) = notfoundroute_wrapped {
                 thread::spawn(move || {
-                    let response: Vec<u8> = (notfoundroute.unwrap().func)(request).into();
-                    let buf = &mut [0 as u8];
+                    let response: Vec<u8> = (notfoundroute.func)(request).into();
+                    let buf = &mut [0_u8];
                     for byte in response {
                         buf[0] = byte;
                         let err = client.write(buf);
                         if err.is_err() {
                             panic!("{:?}", err.unwrap_err())
                         };
-                    };
+                    }
                 });
             } else {
                 let mut response_http = HTTPResponse::from("404 Not Found");
                 response_http.statuscode = HttpStatusCodes::NotFound;
                 response_http.reason = Box::new(b"Not Found".to_owned());
                 let response: Vec<u8> = response_http.into();
-                let buf = &mut [0 as u8];
+                let buf = &mut [0_u8];
                 for byte in response {
                     buf[0] = byte;
                     let err = client.write(buf);
                     if err.is_err() {
                         panic!("{:?}", err.unwrap_err())
                     };
-                };
+                }
             };
             return;
         };
 
         thread::spawn(move || {
             let response: Vec<u8> = (route.unwrap().func)(request).into();
-            let buf = &mut [0 as u8];
+            let buf = &mut [0_u8];
             for byte in response {
                 buf[0] = byte;
                 let err = client.write(buf);
                 if err.is_err() {
                     panic!("{:?}", err.unwrap_err())
                 }
-            };
+            }
         });
     }
 
-    fn find_route_for_path(&mut self, path: &str) -> Option<Route>{
+    fn find_route_for_path(&mut self, path: &str) -> Option<Route> {
         for route in &self.routes {
-            if route.path == path.to_string() {
+            if route.path == *path {
                 return Some(route.clone());
             };
-        };
-        return None;
+        }
+        None
     }
 
     pub fn route(&mut self, path: &str, func: RouteFn) {
-        self.routes.push(Route {path: path.to_string(), func})
+        self.routes.push(Route {
+            path: path.to_string(),
+            func,
+        })
     }
 
     pub fn run(&mut self, bind_address: &str) -> CantBind {
@@ -105,7 +112,7 @@ impl App {
         loop {
             // await for a client
             let mut client = serversock.accept();
-            if !client.is_err() {
+            if client.is_ok() {
                 let request = HTTPRequest::read_http_request(&mut client.as_mut().unwrap().0);
                 if request.is_err() {
                     println!("Can't read request... {:?}", request.unwrap_err());
