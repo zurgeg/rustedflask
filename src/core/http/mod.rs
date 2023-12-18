@@ -206,7 +206,7 @@ impl From<HTTPRequest> for Vec<u8> {
             out.extend(request.content);
         };
         out.extend(b"\r\n");
-        return out;
+        out
     }
 }
 
