@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg_auto))]
 #![deny(missing_docs)]
 //! Internet programming library for Rust
 

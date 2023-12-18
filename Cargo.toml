@@ -18,3 +18,7 @@ regex = "1.10.2"
 [features]
 jinja = []
 all = ["jinja"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
