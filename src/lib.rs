@@ -36,7 +36,7 @@ mod tests {
         example_request.send_to("example.com:80".to_string())?;
         return Ok(());
     }
-    #[cfg(feature = "jinja")]
+    
     #[test]
     fn test_readablevec() -> Result<(), std::io::Error> {
         let vec = vec![b'f', b'o', b'o'];
@@ -50,6 +50,8 @@ mod tests {
         assert_eq!(vec[2], buf[2]);
         return Ok(());
     }
+    
+    #[cfg(feature = "jinja")]
     #[test]
     fn test_parse() -> Result<(), core::http::Error> {
         let mut headers = HashMap::new();
