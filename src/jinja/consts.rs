@@ -1,1 +1,1 @@
-const REPLACE: &str = "{{ *. }}";
+pub const REPLACE: &str = r"{{ *. }}";
