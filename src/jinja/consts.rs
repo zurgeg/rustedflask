@@ -1,1 +1,1 @@
-pub const REPLACE: &str = r"{{ *. }}";
+pub const REPLACE: &str = r#"\{\{ (?P<variable>.*) \}\}"#;
