@@ -546,8 +546,8 @@ impl HTTPResponse {
             httpversion: http_version,
             reason: reason.into(),
             statuscode: status.unwrap(),
-            headers: headers,
-            content: content
+            headers,
+            content
         });
     }
 }

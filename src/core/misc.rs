@@ -10,7 +10,7 @@ impl<T: Clone> Read for ReadableVec<'_, T> where u8: From<T> {
         if self.vector.len() < buf.len() {
             return Err(std::io::Error::other("vector too short"));
         }
-        while added <= buf.len() - 1 {
+        while added < buf.len() {
             buf[added] = self.vector[0].clone().into();
             self.vector.remove(0);
             added += 1;
