@@ -1,14 +1,20 @@
+#![deny(missing_docs)]
+//! Internet programming library for Rust
+
+/// Core APIs
 pub mod core;
+/// A Flask-based API for Rust
 pub mod flask;
 
 #[cfg(feature = "jinja")]
+/// A Jinja parser and renderer for Rust
 pub mod jinja;
 
 #[cfg(test)]
 mod tests {
     use std::{collections::HashMap, io::Read};
 
-    use crate::core::misc::ReadableVec;
+    use crate::{core::misc::ReadableVec, jinja::render_template_string};
 
     use super::*;
 
@@ -27,6 +33,7 @@ mod tests {
         example_request.send_to("example.com:80".to_string())?;
         return Ok(());
     }
+    #[cfg(feature = "jinja")]
     #[test]
     fn test_readablevec() -> Result<(), std::io::Error> {
         let vec = vec![b'f', b'o', b'o'];
@@ -60,6 +67,20 @@ mod tests {
         if resp_parsed.is_err() {
             return Err(resp_parsed.unwrap_err());
         }
-        return Ok(());
+        Ok(())
+    }
+
+    #[cfg(feature = "jinja")]
+    #[test]
+    fn test_jinja_variable() -> Result<(), jinja::JinjaError> {
+        let template = "{{ variable }}".to_string();
+        let mut variables = HashMap::<&str, String>::new();
+        variables.insert("variable", "works".to_string());
+        let rendered = match render_template_string(template, variables) {
+            Err(why) => return Err(why),
+            Ok(response) => response
+        };
+        assert_eq!(rendered, "works".to_string());
+        Ok(())
     }
 }
