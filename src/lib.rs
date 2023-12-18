@@ -36,7 +36,7 @@ mod tests {
         example_request.send_to("example.com:80".to_string())?;
         return Ok(());
     }
-    
+
     #[test]
     fn test_readablevec() -> Result<(), std::io::Error> {
         let vec = vec![b'f', b'o', b'o'];
