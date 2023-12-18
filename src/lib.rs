@@ -14,7 +14,10 @@ pub mod jinja;
 mod tests {
     use std::{collections::HashMap, io::Read};
 
-    use crate::{core::misc::ReadableVec, jinja::render_template_string};
+    use crate::core::misc::ReadableVec;
+
+    #[cfg(feature = "jinja")]
+    use crate::jinja::render_template_string;
 
     use super::*;
 
@@ -70,8 +73,8 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "jinja")]
     #[test]
+    #[cfg(feature = "jinja")]
     fn test_jinja_variable() -> Result<(), jinja::JinjaError> {
         let template = "{{ variable }}".to_string();
         let mut variables = HashMap::<&str, String>::new();
