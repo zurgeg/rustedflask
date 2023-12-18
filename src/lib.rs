@@ -50,8 +50,7 @@ mod tests {
         assert_eq!(vec[2], buf[2]);
         return Ok(());
     }
-    
-    #[cfg(feature = "jinja")]
+
     #[test]
     fn test_parse() -> Result<(), core::http::Error> {
         let mut headers = HashMap::new();
