@@ -162,8 +162,8 @@ pub struct HTTPRequest {
     pub content: Vec<u8>
 }
 
-impl Into<Vec<u8>> for HTTPRequest {
-    /// Converts this request into an array of bytes (`u8`)
+impl From<HTTPRequest> for Vec<u8> {
+    /// Makes a `Vec<u8>` from an `HTTPRequest`, converting it into something suitable to be sent over the Internet
     /// # Examples
     /// ```
     /// # use rustedflask::core::http;
@@ -178,32 +178,32 @@ impl Into<Vec<u8>> for HTTPRequest {
     /// #       headers: headers,
     /// #       content: b"".into(),
     /// # };
-    /// let request_bytes: Vec<u8> = request.into();
+    ///let request_bytes = Vec::<u8>::from(request);
     /// ```
-    fn into(self) -> Vec<u8> {
+    fn from(request: HTTPRequest) -> Vec<u8> {
         let mut out = Vec::new();
         // GET
-        out.extend(self.method.iter());
+        out.extend(request.method.iter());
         out.push(b' ');
         // GET /
-        out.extend(self.path.iter());
+        out.extend(request.path.iter());
         out.push(b' ');
         // GET / HTTP/
-        out.extend(self.httptag.iter());
+        out.extend(request.httptag.iter());
         out.push(b'/');
         // GET / HTTP/1
-        out.extend(httpver_to_vecu8(self.httpversion));
+        out.extend(httpver_to_vecu8(request.httpversion));
         // Newline
         out.extend(b"\r\n".iter());
         // Headers
-        for (header, val) in self.headers {
+        for (header, val) in request.headers {
             out.extend(header.as_bytes());
             out.extend(b": ".iter());
             out.extend(val.as_bytes());
             out.extend(b"\r\n");
         }
-        if self.content.len() != 0 {
-            out.extend(self.content);
+        if request.content.len() != 0 {
+            out.extend(request.content);
         };
         out.extend(b"\r\n");
         return out;
