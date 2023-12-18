@@ -1,3 +1,5 @@
+//! A simple HTTP library for Rust
+
 use std::{
     collections::HashMap,
     io::{Read, Write},
@@ -12,6 +14,7 @@ use misc::httpver_to_vecu8;
 
 /// An HTTP status code
 #[derive(FromPrimitive, Clone, Debug)]
+#[allow(missing_docs)]
 pub enum HttpStatusCodes {
     Continue = 100,
     /// A notice that the server is switching protocols
@@ -175,8 +178,8 @@ impl From<HTTPRequest> for Vec<u8> {
     /// # let mut headers = HashMap::new();
     /// # headers.insert("Host".to_string(), "example.com".to_string());
     /// # let request = http::HTTPRequest {
-    /// #       method: Box::new(b"GET".to_owned()),
-    /// #       path: Box::new(b"/".to_owned()),
+    /// #       method: b"GET".to_vec(),
+    /// #       path: b"/".to_vec(),
     /// #       httptag: Box::new(b"HTTP".to_owned()),
     /// #       httpversion: (1, 1),
     /// #       headers: headers,
@@ -223,8 +226,8 @@ impl HTTPRequest {
     /// # let mut headers = HashMap::new();
     /// # headers.insert("Host".to_string(), "example.com".to_string());
     /// # let mut request = http::HTTPRequest {
-    /// #       method: Box::new(b"GET".to_owned()),
-    /// #       path: Box::new(b"/".to_owned()),
+    /// #       method: b"GET".to_vec(),
+    /// #       path: b"/".to_vec(),
     /// #       httptag: Box::new(b"HTTP".to_owned()),
     /// #       httpversion: (1, 1),
     /// #       headers: headers,

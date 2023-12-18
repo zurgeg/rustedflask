@@ -5,6 +5,7 @@ use std::{
     thread,
 };
 
+/// A callback function for when a route is accessed
 pub type RouteFn = fn(request: HTTPRequest) -> HTTPResponse;
 
 #[derive(Clone)]
@@ -13,14 +14,29 @@ struct Route {
     pub func: RouteFn,
 }
 
+/// An app (similar to Python's `flask.Flask`)
 pub struct App {
+    /// The name of this app
     pub name: String,
     routes: Vec<Route>,
 }
 
+/// Could not bind to the given address
 pub struct CantBind;
 
 impl App {
+    /// Makes a new app
+    /// 
+    /// Equivalent to
+    /// ```python
+    /// app = Flask("name")
+    /// ````
+    /// 
+    /// # Examples
+    /// ```rust
+    /// # use rustedflask::flask::App;
+    /// let app = App::new("name".to_string());
+    /// ```
     pub fn new(name: String) -> App {
         App {
             name,
@@ -92,6 +108,8 @@ impl App {
         None
     }
 
+    /// Creates a route for `path`, calling `func` when
+    /// the route is accessed
     pub fn route(&mut self, path: &str, func: RouteFn) {
         self.routes.push(Route {
             path: path.to_string(),
@@ -99,6 +117,7 @@ impl App {
         })
     }
 
+    /// Runs the (debug!) webserver
     pub fn run(&mut self, bind_address: &str) -> CantBind {
         let serversock_wrapped = TcpListener::bind(bind_address);
 

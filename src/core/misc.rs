@@ -1,6 +1,10 @@
+//! other things
+
 use std::io::Read;
 
+/// A Vec that can be read from
 pub struct ReadableVec<'a, T> {
+    /// The vec to be used
     pub vector: &'a mut Vec<T>,
 }
 
