@@ -446,6 +446,17 @@ impl From<&str> for HTTPResponse {
 }
 
 impl HTTPResponse {
+    /// Creates a new, blank HTTP response
+    pub fn new() -> HTTPResponse {
+        HTTPResponse {
+            httptag: Box::new(b"HTTP".to_owned()),
+            httpversion: (1, 1),
+            statuscode: HttpStatusCodes::Ok,
+            reason: Box::new(b"OK".to_owned()),
+            headers: HashMap::new(),
+            content: Vec::new()
+        }
+    }
     /// Reads an HTTP response from `stream` into an HTTPResponse
     pub fn read_http_response(stream: &mut impl Read) -> Result<HTTPResponse, Error> {
         // read the HTTP thing
