@@ -620,3 +620,9 @@ impl HTTPResponse {
         returnval
     }
 }
+
+impl Default for HTTPResponse {
+    fn default() -> Self {
+        Self::new()
+    }
+}
