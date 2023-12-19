@@ -583,4 +583,25 @@ impl HTTPResponse {
             content,
         })
     }
+    /// Changes the status code of this request
+    pub fn with_statuscode(self, statuscode: HttpStatusCodes, reason: Box<[u8]>) -> HTTPResponse {
+        let mut returnval = self.clone();
+        returnval.statuscode = statuscode;
+        returnval.reason = reason;
+        returnval
+    }
+
+    /// Adds a header to this request
+    pub fn with_header(self, header: String, value: String) -> HTTPResponse {
+        let mut returnval = self.clone();
+        returnval.headers.insert(header, value);
+        returnval
+    }
+
+    /// Changes the content of this request
+    pub fn with_content(self, content: Vec<u8>) -> HTTPResponse {
+        let mut returnval = self.clone();
+        returnval.content = content;
+        returnval
+    }
 }
