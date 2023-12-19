@@ -5,7 +5,8 @@ use rustedflask::{
     jinja::render_template,
     core::http::{
         HTTPRequest,
-        HTTPResponse
+        HTTPResponse,
+        HttpStatusCodes
     }
 };
 
@@ -19,7 +20,11 @@ fn template_route(request: HTTPRequest) -> HTTPResponse {
     variables.insert("template_name", template_name.to_string());
     match render_template(template_name, variables) {
         Ok(content) => HTTPResponse::from(&*content),
-        Err(why) => todo!(),
+        // Build an error page
+        Err(why) => HTTPResponse::new().
+        with_statuscode(HttpStatusCodes::InternalServerError, 
+            Box::new(b"Internal Server Error".to_owned())).
+        with_content(format!("{:?}", why).into())
     }
 }
 
