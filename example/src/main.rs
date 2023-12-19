@@ -18,7 +18,7 @@ fn template_route(request: HTTPRequest) -> HTTPResponse {
     let template_name = "template.html.jinja2";
     let mut variables = HashMap::new();
     variables.insert("template_name", template_name.to_string());
-    match render_template(template_name, variables) {
+    match render_template(template_name, variables, None) {
         Ok(content) => HTTPResponse::from(&*content),
         // Build an error page
         Err(why) => HTTPResponse::new().
