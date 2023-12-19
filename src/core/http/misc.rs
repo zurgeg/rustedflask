@@ -1,7 +1,7 @@
 /// Converts an HTTP version (`(i32, i32)`) to a `Vec<u8>`
 ///
 /// In hindsight, this should've been
-/// `Impl From<i32, i32> for Vec<u8>`
+/// `impl From<i32, i32> for Vec<u8>`
 ///
 /// Oh well.
 pub fn httpver_to_vecu8(httpver: (i32, i32)) -> Vec<u8> {
