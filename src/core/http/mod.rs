@@ -613,6 +613,7 @@ impl HTTPResponse {
     pub fn with_content(self, content: Vec<u8>) -> HTTPResponse {
         let mut returnval = self.clone();
         returnval.content = content;
+        returnval.headers.insert("Content-Length".to_string(), returnval.clone().content.len().to_string());
         returnval
     }
 }
