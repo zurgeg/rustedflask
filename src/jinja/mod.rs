@@ -4,6 +4,29 @@ use regex::Regex;
 
 use std::{collections::HashMap, fs::File, io::Read, path::Path};
 
+/// A function that can be passed to a Jinja template
+/// ### Warning
+/// Unlike in Python's Jinja, where functions are written like so:
+/// ```python
+/// def func(foo):
+///     return foo
+/// ```
+/// 
+/// In Rusted Flask Jinja, arguments are passed as a Vec. 
+/// The equivalent in Python would be:
+/// ```python
+/// def func(*args):
+///     return args[0]
+/// ```
+/// 
+/// # Examples
+/// ```
+/// fn func(arguments: Vec<String>) -> String {
+///     arguments[0_usize].clone()
+/// }
+/// ```
+pub type JinjaFunction = fn(Vec<String>) -> String;
+
 /// An error from within Jinja.
 ///
 /// This should be raised as an issue
