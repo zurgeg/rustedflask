@@ -59,7 +59,7 @@ pub fn render_template_string(
 pub fn render_template(file: &str, variables: HashMap<&str, String>) -> Result<String, JinjaError> {
     // Variables are <&str, String> because the key is more likely to be
     // a string const, and the value is more likely to be dynamically generated
-    let fpath = Path::new("templates").join(file);
+    let fpath = Path::new("./templates/").join(file);
     let mut opened_file = match File::open(fpath) {
         Err(why) => {
             return Err(JinjaError::Other(format!(
