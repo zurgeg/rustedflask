@@ -81,7 +81,7 @@ mod tests {
         let template = "{{ variable }}".to_string();
         let mut variables = HashMap::<&str, String>::new();
         variables.insert("variable", "works".to_string());
-        let rendered = match render_template_string(template, variables) {
+        let rendered = match render_template_string(template, variables, None) {
             Err(why) => return Err(why),
             Ok(response) => response,
         };

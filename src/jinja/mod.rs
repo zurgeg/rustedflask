@@ -57,6 +57,7 @@ pub enum JinjaError {
 pub fn render_template_string(
     template: String,
     variables: HashMap<&str, String>,
+    functions: Option<HashMap<&str, JinjaFunction>>
 ) -> Result<String, JinjaError> {
     let mut rendered = String::new();
     let simple_variable = match Regex::new(consts::REPLACE) {
@@ -79,7 +80,7 @@ pub fn render_template_string(
 }
 
 /// Renders a template from a given file
-pub fn render_template(file: &str, variables: HashMap<&str, String>) -> Result<String, JinjaError> {
+pub fn render_template(file: &str, variables: HashMap<&str, String>, functions: Option<HashMap<&str, JinjaFunction>>) -> Result<String, JinjaError> {
     // Variables are <&str, String> because the key is more likely to be
     // a string const, and the value is more likely to be dynamically generated
     let fpath = Path::new("./templates/").join(file);
@@ -102,6 +103,6 @@ pub fn render_template(file: &str, variables: HashMap<&str, String>) -> Result<S
                 why
             )))
         }
-        Ok(_) => return render_template_string(contents, variables),
+        Ok(_) => return render_template_string(contents, variables, functions),
     }
 }
