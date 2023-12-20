@@ -112,16 +112,20 @@ mod tests {
             let mut return_val = args[0].clone();
             return_val.extend(args[1].chars());
             return_val.extend(args[2].chars());
+            return_val.extend(args[3].chars());
             return_val
         };
-        let template = r#"{{ function("works", "blah","hah") }}"#.to_string();
+        let template = r#"{{ function("works", "blah","hah", variable) }}"#.to_string();
         let mut functions: HashMap<&str, jinja::JinjaFunction> = HashMap::new();
         functions.insert("function", test_function);
-        let rendered = match render_template_string(template, HashMap::new(), Some(functions)) {
+
+        let mut variables = HashMap::new();
+        variables.insert("variable", "gah".to_string());
+        let rendered = match render_template_string(template, variables, Some(functions)) {
             Err(why) => return Err(why),
             Ok(response) => response,
         };
-        assert_eq!(rendered, "worksblahhah".to_string());
+        assert_eq!(rendered, "worksblahhahgah".to_string());
         Ok(())
     }
 }
