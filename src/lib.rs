@@ -109,9 +109,11 @@ mod tests {
     #[cfg(feature = "jinja")]
     fn test_jinja_function_args() -> Result<(), jinja::JinjaError> {
         fn test_function(args: Vec<String>) -> String {
-            args[0].to_string()
+            let mut return_val = args[0].clone();
+            return_val.extend(args[1].chars());
+            return_val
         };
-        let template = r#"{{ function("works") }}"#.to_string();
+        let template = r#"{{ function("works", "blah") }}"#.to_string();
         let mut functions: HashMap<&str, jinja::JinjaFunction> = HashMap::new();
         functions.insert("function", test_function);
         let rendered = match render_template_string(template, HashMap::new(), Some(functions)) {
