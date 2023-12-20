@@ -88,4 +88,20 @@ mod tests {
         assert_eq!(rendered, "works".to_string());
         Ok(())
     }
+    #[test]
+    #[cfg(feature = "jinja")]
+    fn test_jinja_function_no_args() -> Result<(), jinja::JinjaError> {
+        fn test_function(args: Vec<String>) -> String {
+            "works".to_string()
+        }
+        let template = "{{ function() }}".to_string();
+        let mut functions: HashMap<&str, jinja::JinjaFunction> = HashMap::new();
+        functions.insert("function", test_function);
+        let rendered = match render_template_string(template, HashMap::new(), Some(functions)) {
+            Err(why) => return Err(why),
+            Ok(response) => response
+        };
+        assert_eq!(rendered, "works".to_string());
+        Ok(())
+    }
 }

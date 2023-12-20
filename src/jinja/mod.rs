@@ -67,16 +67,17 @@ fn parse_replace<'a>(
     variables: &HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
 ) -> Result<(bool, String, Vec<String>), JinjaError> {
+    let mut is_function = false;
+    let mut function_name = String::new();
+    let mut function_args = Vec::<String>::new();
+    let mut varname_chars = VecDeque::from(varname.to_string().into_bytes());
     loop {
-        let mut is_function = false;
-        let mut function_name = String::new();
-        let mut function_args = Vec::<String>::new();
-        let mut varname_chars = VecDeque::from(varname.to_string().into_bytes());
         let curchar = match varname_chars.pop_front() {
             None => break,
             Some(val) => val,
         };
         if curchar == b'(' {
+            println!("function {}", function_name);
             is_function = true;
             if function_name == "".to_string() {
                 return Err(JinjaError::SyntaxError("Function call with no name".into()));
@@ -127,19 +128,17 @@ fn parse_replace<'a>(
                         return Ok((is_function, function_name, function_args));
                     } else {
                         // It's a variable, start reading it...
-                        let curchar = match varname_chars.pop_front() {
-                            None => {
-                                return Err(JinjaError::SyntaxError("Unclosed parentheses".into()))
-                            }
-                            Some(val) => val,
-                        };
+                        todo!();
                     }
                 }
             }
         }
-        function_name.push(curchar.into())
+        function_name.push(curchar.into());
     }
-    unreachable!();
+    if !is_function {
+        return Ok((is_function, String::new(), vec![]));
+    };
+    unreachable!()
 }
 
 /// Renders a template from a given string
@@ -162,11 +161,30 @@ pub fn render_template_string<'a>(
         let variable = &entry;
         let varname = &variable["variable"];
 
-        let variable_value = match variables.get(&varname) {
-            None => return Err(JinjaError::NoSuchVariable),
-            Some(val) => val,
+        let (is_function, function_name, function_args) = match parse_replace(varname, &variables, functions.clone()) {
+            Err(why) => return Err(why),
+            Ok(value) => value
         };
-        rendered = template.replace(&variable[0], variable_value);
+        if is_function {
+            match functions {
+                Some(ref functions) => {
+                    let functions = functions.clone();
+                    let function = match functions.get(&*function_name) {
+                        Some(function) => function,
+                        None => return Err(JinjaError::NoSuchFunction)
+                    };
+                    let value = function(function_args);
+                    rendered = rendered.replace(&variable[0], &*value);
+                },
+                None => return Err(JinjaError::NoSuchFunction)
+            }
+        } else {
+            let variable_value = match variables.get(&varname) {
+                None => return Err(JinjaError::NoSuchVariable),
+                Some(val) => val,
+            };
+            rendered = template.replace(&variable[0], variable_value);
+        };
     }
 
     Ok(rendered)
