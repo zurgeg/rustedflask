@@ -3,7 +3,6 @@ mod consts;
 use regex::Regex;
 
 use std::{
-    any::Any,
     collections::{HashMap, VecDeque},
     fs::File,
     io::Read,
@@ -64,8 +63,7 @@ pub enum JinjaError {
 }
 fn parse_replace<'a>(
     varname: &str,
-    variables: &HashMap<&'a str, String>,
-    functions: Option<HashMap<&'a str, JinjaFunction>>,
+    variables: &HashMap<&'a str, String>
 ) -> Result<(bool, String, Vec<String>), JinjaError> {
     let mut is_function = false;
     let mut function_name = String::new();
@@ -134,7 +132,7 @@ fn parse_replace<'a>(
                         // it's a variable, start parsing
                         let mut varname = String::new();
                         varname.push(curchar.into());
-                        let mut curchar = 0x0;
+                        let mut curchar: u8;
                         loop {
                             curchar = match varname_chars.pop_front() {
                                 None => {
@@ -196,7 +194,7 @@ pub fn render_template_string<'a>(
         let varname = &variable["variable"];
 
         let (is_function, function_name, function_args) =
-            match parse_replace(varname, &variables, functions.clone()) {
+            match parse_replace(varname, &variables) {
                 Err(why) => return Err(why),
                 Ok(value) => value,
             };
