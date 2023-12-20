@@ -112,7 +112,10 @@ fn parse_replace<'a>(
                                 };
                                 function_args.push(string_lit.clone());
                                 match curchar {
-                                    b',' => break,
+                                    b',' => {
+                                        varname_chars.push_back(b',');
+                                        break;
+                                    },
                                     b')' => return Ok((is_function, function_name, function_args)),
                                     somethingelse => {
                                         return Err(JinjaError::SyntaxError(format!(
@@ -125,13 +128,15 @@ fn parse_replace<'a>(
                             }
                             string_lit.push(curchar.into());
                         }
-                        println!("literal: {}", string_lit);
                         function_args.push(string_lit);
+
                     } else if curchar == b')' {
                         return Ok((is_function, function_name, function_args));
+                    } else if curchar == b',' {
+                        continue;
                     } else {
-                        // It's a variable, start reading it...
-                        todo!();
+                        // it's a variable, start parsing
+                        todo!()
                     }
                 }
             }
