@@ -115,7 +115,7 @@ fn parse_replace<'a>(
                                     b',' => {
                                         varname_chars.push_back(b',');
                                         break;
-                                    },
+                                    }
                                     b')' => return Ok((is_function, function_name, function_args)),
                                     somethingelse => {
                                         return Err(JinjaError::SyntaxError(format!(
@@ -128,7 +128,6 @@ fn parse_replace<'a>(
                             }
                             string_lit.push(curchar.into());
                         }
-
                     } else if curchar == b')' {
                         return Ok((is_function, function_name, function_args));
                     } else if curchar == b',' || curchar == b' ' {
@@ -140,15 +139,21 @@ fn parse_replace<'a>(
                         let mut curchar = 0x0;
                         loop {
                             curchar = match varname_chars.pop_front() {
-                                None => return Err(JinjaError::SyntaxError("Unclosed parentheses".into())),
+                                None => {
+                                    return Err(JinjaError::SyntaxError(
+                                        "Unclosed parentheses".into(),
+                                    ))
+                                }
                                 Some(val) => val,
                             };
-                            if curchar == b',' || curchar ==  b')' {
+                            if curchar == b',' || curchar == b')' {
                                 println!("comma/paren {}", char::from(curchar.clone()));
                                 break;
                             }
                             if curchar == b' ' {
-                                return Err(JinjaError::SyntaxError("Expected a variable name, but a space was found".into()));
+                                return Err(JinjaError::SyntaxError(
+                                    "Expected a variable name, but a space was found".into(),
+                                ));
                             } else {
                                 varname.push(curchar.into());
                             }
@@ -156,7 +161,7 @@ fn parse_replace<'a>(
                         println!("{}", varname);
                         let varval = match variables.get(&*varname) {
                             None => return Err(JinjaError::NoSuchVariable),
-                            Some(val) => val
+                            Some(val) => val,
                         };
                         function_args.push(varval.clone());
                         println!("comma/paren {}", char::from(curchar.clone()));
