@@ -26,6 +26,8 @@ pub enum JinjaError {
     TemplateNotFound,
     /// There was no such variable passed to Jinja
     NoSuchVariable,
+    /// The template could not be opened
+    NoSuchTemplate,
     /// An other error occured
     Other(String),
 }
@@ -35,7 +37,7 @@ pub fn render_template_string(
     template: String,
     variables: HashMap<&str, String>,
 ) -> Result<String, JinjaError> {
-    let mut rendered = String::new();
+    let mut rendered = template.clone();
     let simple_variable = match Regex::new(consts::REPLACE) {
         Err(why) => {
             return Err(JinjaError::InternalJinjaError(
@@ -44,13 +46,37 @@ pub fn render_template_string(
         }
         Ok(regex) => regex,
     };
-    for entry in simple_variable.captures_iter(&template) {
+    let inclusion = match Regex::new(consts::INCLUDE) {
+        Err(why) => {
+            return Err(JinjaError::InternalJinjaError(
+                InternalJinjaError::CantReadRegex(why),
+            ))
+        }
+        Ok(regex) => regex,
+    };
+
+    for entry in inclusion.captures_iter(&rendered.clone()) {
+        let filename = Path::new("./templates/").join(Path::new(&entry["filename"]));
+        let mut file = match File::open(filename) {
+            Err(_) => return Err(JinjaError::NoSuchTemplate),
+            Ok(file) => file
+        };
+
+        let mut contents = String::new();
+        match file.read_to_string(&mut contents) {
+            Err(_) => return Err(JinjaError::Other("Could not read template file".into())),
+            Ok(_) => {}
+        };
+        rendered = rendered.replace(&entry[0], &*contents);
+    }
+
+    for entry in simple_variable.captures_iter(&rendered.clone()) {
         let variable = &entry;
         let variable_value = match variables.get(&variable["variable"]) {
             None => return Err(JinjaError::NoSuchVariable),
             Some(val) => val,
         };
-        rendered = template.replace(&variable[0], variable_value);
+        rendered = rendered.replace(&variable[0], variable_value);
     }
     Ok(rendered)
 }
