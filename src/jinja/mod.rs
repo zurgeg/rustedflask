@@ -6,7 +6,7 @@ use std::{
     collections::{HashMap, VecDeque},
     fs::File,
     io::Read,
-    path::Path,
+    path::Path, any::Any,
 };
 
 /// A function that can be passed to a Jinja template
@@ -57,9 +57,9 @@ pub enum JinjaError {
     /// There was no such function passed to Jinja
     NoSuchFunction,
     /// Syntax was invalid
-    SyntaxError(Box<dyn std::fmt::Display>),
+    SyntaxError(String),
     /// An other error occured
-    Other(Box<dyn std::fmt::Display>),
+    Other(String),
 }
 fn parse_replace<'a>(
     varname: &str,
@@ -78,12 +78,12 @@ fn parse_replace<'a>(
         if curchar == b'(' {
             is_function = true;
             if function_name == "".to_string() {
-                return Err(JinjaError::SyntaxError("Function call with no name"));
+                return Err(JinjaError::SyntaxError("Function call with no name".into()));
             } else {
                 // Start parsing arguments
                 loop {
                     let curchar = match varname_chars.pop_front() {
-                        None => return Err(JinjaError::SyntaxError("Unclosed parentheses")),
+                        None => return Err(JinjaError::SyntaxError("Unclosed parentheses".into())),
                         Some(val) => val,
                     };
                     if curchar == b'"' {
@@ -91,18 +91,18 @@ fn parse_replace<'a>(
                         // Start parsing a string literal
                         loop {
                             let curchar = match varname_chars.pop_front() {
-                                None => return Err(JinjaError::SyntaxError("Unclosed string literal")),
+                                None => return Err(JinjaError::SyntaxError("Unclosed string literal".into())),
                                 Some(val) => val,
                             };
                             if curchar == b'"'{
                                 let curchar = match varname_chars.pop_front() {
-                                    None => return Err(JinjaError::SyntaxError("Unclosed parentheses")),
+                                    None => return Err(JinjaError::SyntaxError("Unclosed parentheses".into())),
                                     Some(val) => val,
                                 };
                                 match curchar {
                                     b',' => break,
                                     b')' => return Ok((is_function, function_name, function_args)),
-                                    somethingelse => return Err(JinjaError::SyntaxError(&*format!("Expected comma or closing parentheses, got \"{}\"", char::from(somethingelse))))
+                                    somethingelse => return Err(JinjaError::SyntaxError(format!("Expected comma or closing parentheses, got \"{}\"", char::from(somethingelse))).into())
                                 }
                             }
                             string_lit.push(curchar.into());
@@ -111,7 +111,7 @@ fn parse_replace<'a>(
                     } else {
                         // It's a variable, start reading it...
                         let curchar = match varname_chars.pop_front() {
-                            None => return Err(JinjaError::SyntaxError("Unclosed parentheses")),
+                            None => return Err(JinjaError::SyntaxError("Unclosed parentheses".into())),
                             Some(val) => val,
                         };
                     }
@@ -142,10 +142,6 @@ pub fn render_template_string<'a>(
     for entry in simple_variable.captures_iter(&template) {
         let variable = &entry;
         let varname = &variable["variable"];
-        let mut is_function = false;
-        let mut function_name = String::new();
-        let mut function_args = Vec::<String>::new();
-        let mut varname_chars = VecDeque::from(varname.to_string().into_bytes());
 
         let variable_value = match variables.get(&varname) {
             None => return Err(JinjaError::NoSuchVariable),
@@ -162,7 +158,7 @@ pub fn render_template<'a>(
     file: &'a str,
     variables: HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
-) -> Result<String, JinjaError<'a>> {
+) -> Result<String, JinjaError> {
     // Variables are <&str, String> because the key is more likely to be
     // a string const, and the value is more likely to be dynamically generated
     let fpath = Path::new("./templates/").join(file);
