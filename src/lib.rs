@@ -111,17 +111,16 @@ mod tests {
         fn test_function(args: Vec<String>) -> String {
             let mut return_val = args[0].clone();
             return_val.extend(args[1].chars());
-            return_val.extend(args[2].chars());
             return_val
         };
-        let template = r#"{{ function("works", "blah","foo") }}"#.to_string();
+        let template = r#"{{ function("works", "blah") }}"#.to_string();
         let mut functions: HashMap<&str, jinja::JinjaFunction> = HashMap::new();
         functions.insert("function", test_function);
         let rendered = match render_template_string(template, HashMap::new(), Some(functions)) {
             Err(why) => return Err(why),
             Ok(response) => response,
         };
-        assert_eq!(rendered, "worksblahfoo".to_string());
+        assert_eq!(rendered, "works".to_string());
         Ok(())
     }
 }

@@ -72,7 +72,6 @@ fn parse_replace<'a>(
     let mut function_args = Vec::<String>::new();
     let mut varname_chars = VecDeque::from(varname.to_string().into_bytes());
     loop {
-        let mut string_lit = String::new();
         let curchar = match varname_chars.pop_front() {
             None => break,
             Some(val) => val,
@@ -90,6 +89,7 @@ fn parse_replace<'a>(
                     };
                     if curchar == b'"' {
                         println!("start parsing string lit");
+                        let mut string_lit = String::new();
                         // Start parsing a string literal
                         loop {
                             let curchar = match varname_chars.pop_front() {
@@ -101,6 +101,7 @@ fn parse_replace<'a>(
                                 Some(val) => val,
                             };
                             if curchar == b'"' {
+                                println!("string lit end: {}", string_lit);
                                 let curchar = match varname_chars.pop_front() {
                                     None => {
                                         return Err(JinjaError::SyntaxError(
@@ -115,10 +116,7 @@ fn parse_replace<'a>(
                                         varname_chars.push_back(b',');
                                         break;
                                     },
-                                    b')' => {
-                                        println!("pushing {} in match", string_lit.clone());
-                                        function_args.push(string_lit.clone());
-                                    },
+                                    b')' => return Ok((is_function, function_name, function_args)),
                                     somethingelse => {
                                         return Err(JinjaError::SyntaxError(format!(
                                             "Expected comma or closing parentheses, got \"{}\"",
@@ -130,13 +128,11 @@ fn parse_replace<'a>(
                             }
                             string_lit.push(curchar.into());
                         }
-                        println!("pushing {}", string_lit.clone());
-                        function_args.push(string_lit.clone());
+                        function_args.push(string_lit);
 
                     } else if curchar == b')' {
-                        println!("args: {:#?}", function_args);
                         return Ok((is_function, function_name, function_args));
-                    } else if curchar == b',' || curchar == b' ' {
+                    } else if curchar == b',' {
                         continue;
                     } else {
                         // it's a variable, start parsing
