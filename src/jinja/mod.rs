@@ -2,7 +2,12 @@ mod consts;
 
 use regex::Regex;
 
-use std::{collections::{HashMap, VecDeque}, fs::File, io::Read, path::Path};
+use std::{
+    collections::{HashMap, VecDeque},
+    fs::File,
+    io::Read,
+    path::Path,
+};
 
 /// A function that can be passed to a Jinja template
 /// ### Warning
@@ -11,14 +16,14 @@ use std::{collections::{HashMap, VecDeque}, fs::File, io::Read, path::Path};
 /// def func(foo):
 ///     return foo
 /// ```
-/// 
-/// In Rusted Flask Jinja, arguments are passed as a Vec. 
+///
+/// In Rusted Flask Jinja, arguments are passed as a Vec.
 /// The equivalent in Python would be:
 /// ```python
 /// def func(*args):
 ///     return args[0]
 /// ```
-/// 
+///
 /// # Examples
 /// ```
 /// fn func(arguments: Vec<String>) -> String {
@@ -56,7 +61,11 @@ pub enum JinjaError<'a> {
     /// An other error occured
     Other(String),
 }
-fn parse_replace<'a>(varname: &str, variables: &HashMap<&'a str, String>, functions: Option<HashMap<&'a str, JinjaFunction>>) -> Result<(bool, String, Vec<String>, VecDeque<u8>), JinjaError<'a>> {
+fn parse_replace<'a>(
+    varname: &str,
+    variables: &HashMap<&'a str, String>,
+    functions: Option<HashMap<&'a str, JinjaFunction>>,
+) -> Result<(bool, String, Vec<String>, VecDeque<u8>), JinjaError<'a>> {
     loop {
         let mut is_function = false;
         let mut function_name = String::new();
@@ -64,12 +73,12 @@ fn parse_replace<'a>(varname: &str, variables: &HashMap<&'a str, String>, functi
         let mut varname_chars = VecDeque::from(varname.to_string().into_bytes());
         let curchar = match varname_chars.pop_front() {
             None => break,
-            Some(val) => val
+            Some(val) => val,
         };
         if curchar == b'(' {
             if function_name == "".to_string() {
                 return Err(JinjaError::SyntaxError("Function call with no name"));
-            } 
+            }
         }
     }
     unreachable!();
@@ -79,7 +88,7 @@ fn parse_replace<'a>(varname: &str, variables: &HashMap<&'a str, String>, functi
 pub fn render_template_string<'a>(
     template: String,
     variables: HashMap<&'a str, String>,
-    functions: Option<HashMap<&'a str, JinjaFunction>>
+    functions: Option<HashMap<&'a str, JinjaFunction>>,
 ) -> Result<String, JinjaError<'a>> {
     let mut rendered = String::new();
     let simple_variable = match Regex::new(consts::REPLACE) {
@@ -110,7 +119,11 @@ pub fn render_template_string<'a>(
 }
 
 /// Renders a template from a given file
-pub fn render_template<'a>(file: &'a str, variables: HashMap<&'a str, String>, functions: Option<HashMap<&'a str, JinjaFunction>>) -> Result<String, JinjaError<'a>> {
+pub fn render_template<'a>(
+    file: &'a str,
+    variables: HashMap<&'a str, String>,
+    functions: Option<HashMap<&'a str, JinjaFunction>>,
+) -> Result<String, JinjaError<'a>> {
     // Variables are <&str, String> because the key is more likely to be
     // a string const, and the value is more likely to be dynamically generated
     let fpath = Path::new("./templates/").join(file);
