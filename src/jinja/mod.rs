@@ -77,7 +77,6 @@ fn parse_replace<'a>(
             Some(val) => val,
         };
         if curchar == b'(' {
-            println!("function {}", function_name);
             is_function = true;
             if function_name == "".to_string() {
                 return Err(JinjaError::SyntaxError("Function call with no name".into()));
