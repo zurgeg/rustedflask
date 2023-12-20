@@ -88,6 +88,7 @@ fn parse_replace<'a>(
                         Some(val) => val,
                     };
                     if curchar == b'"' {
+                        println!("start parsing string lit");
                         let mut string_lit = String::new();
                         // Start parsing a string literal
                         loop {
@@ -100,6 +101,7 @@ fn parse_replace<'a>(
                                 Some(val) => val,
                             };
                             if curchar == b'"' {
+                                println!("string lit end: {}", string_lit);
                                 let curchar = match varname_chars.pop_front() {
                                     None => {
                                         return Err(JinjaError::SyntaxError(
@@ -108,6 +110,7 @@ fn parse_replace<'a>(
                                     }
                                     Some(val) => val,
                                 };
+                                function_args.push(string_lit.clone());
                                 match curchar {
                                     b',' => break,
                                     b')' => return Ok((is_function, function_name, function_args)),
@@ -122,7 +125,8 @@ fn parse_replace<'a>(
                             }
                             string_lit.push(curchar.into());
                         }
-                        function_args.push(string_lit)
+                        println!("literal: {}", string_lit);
+                        function_args.push(string_lit);
                     } else if curchar == b')' {
                         return Ok((is_function, function_name, function_args));
                     } else {
