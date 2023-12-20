@@ -88,7 +88,6 @@ fn parse_replace<'a>(
                         Some(val) => val,
                     };
                     if curchar == b'"' {
-                        println!("start parsing string lit");
                         let mut string_lit = String::new();
                         // Start parsing a string literal
                         loop {
@@ -101,7 +100,6 @@ fn parse_replace<'a>(
                                 Some(val) => val,
                             };
                             if curchar == b'"' {
-                                println!("string lit end: {}", string_lit);
                                 function_args.push(string_lit.clone());
                                 let curchar = match varname_chars.pop_front() {
                                     None => {
@@ -147,7 +145,6 @@ fn parse_replace<'a>(
                                 Some(val) => val,
                             };
                             if curchar == b',' || curchar == b')' {
-                                println!("comma/paren {}", char::from(curchar.clone()));
                                 break;
                             }
                             if curchar == b' ' {
@@ -158,13 +155,11 @@ fn parse_replace<'a>(
                                 varname.push(curchar.into());
                             }
                         }
-                        println!("{}", varname);
                         let varval = match variables.get(&*varname) {
                             None => return Err(JinjaError::NoSuchVariable),
                             Some(val) => val,
                         };
                         function_args.push(varval.clone());
-                        println!("comma/paren {}", char::from(curchar.clone()));
                         if curchar == b')' {
                             return Ok((is_function, function_name, function_args));
                         }

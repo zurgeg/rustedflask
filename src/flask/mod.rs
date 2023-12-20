@@ -49,7 +49,6 @@ impl App {
         let route_string = String::from_utf8(proper_request_path);
 
         if route_string.is_err() {
-            // println!("route_string can't be converted!");
             return;
         }
 
