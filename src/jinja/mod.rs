@@ -102,6 +102,7 @@ fn parse_replace<'a>(
                             };
                             if curchar == b'"' {
                                 println!("string lit end: {}", string_lit);
+                                function_args.push(string_lit.clone());
                                 let curchar = match varname_chars.pop_front() {
                                     None => {
                                         return Err(JinjaError::SyntaxError(
@@ -110,7 +111,6 @@ fn parse_replace<'a>(
                                     }
                                     Some(val) => val,
                                 };
-                                function_args.push(string_lit.clone());
                                 match curchar {
                                     b',' => {
                                         varname_chars.push_back(b',');
@@ -128,11 +128,10 @@ fn parse_replace<'a>(
                             }
                             string_lit.push(curchar.into());
                         }
-                        function_args.push(string_lit);
 
                     } else if curchar == b')' {
                         return Ok((is_function, function_name, function_args));
-                    } else if curchar == b',' {
+                    } else if curchar == b',' || curchar == b' ' {
                         continue;
                     } else {
                         // it's a variable, start parsing
