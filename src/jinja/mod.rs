@@ -46,7 +46,7 @@ pub enum InternalJinjaError {
 /// This can come from your own code,
 /// or from Jinja itself (see `InternalJinjaError`)
 #[derive(Debug)]
-pub enum JinjaError<'a> {
+pub enum JinjaError {
     /// An error from within Jinja
     /// See the `InternalJinjaError` enum
     InternalJinjaError(InternalJinjaError),
@@ -57,15 +57,15 @@ pub enum JinjaError<'a> {
     /// There was no such function passed to Jinja
     NoSuchFunction,
     /// Syntax was invalid
-    SyntaxError(&'a str),
+    SyntaxError(Box<dyn std::fmt::Display>),
     /// An other error occured
-    Other(String),
+    Other(Box<dyn std::fmt::Display>),
 }
 fn parse_replace<'a>(
     varname: &str,
     variables: &HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
-) -> Result<(bool, String, Vec<String>, VecDeque<u8>), JinjaError<'a>> {
+) -> Result<(bool, String, Vec<String>), JinjaError> {
     loop {
         let mut is_function = false;
         let mut function_name = String::new();
@@ -76,10 +76,49 @@ fn parse_replace<'a>(
             Some(val) => val,
         };
         if curchar == b'(' {
+            is_function = true;
             if function_name == "".to_string() {
                 return Err(JinjaError::SyntaxError("Function call with no name"));
+            } else {
+                // Start parsing arguments
+                loop {
+                    let curchar = match varname_chars.pop_front() {
+                        None => return Err(JinjaError::SyntaxError("Unclosed parentheses")),
+                        Some(val) => val,
+                    };
+                    if curchar == b'"' {
+                        let mut string_lit = String::new();
+                        // Start parsing a string literal
+                        loop {
+                            let curchar = match varname_chars.pop_front() {
+                                None => return Err(JinjaError::SyntaxError("Unclosed string literal")),
+                                Some(val) => val,
+                            };
+                            if curchar == b'"'{
+                                let curchar = match varname_chars.pop_front() {
+                                    None => return Err(JinjaError::SyntaxError("Unclosed parentheses")),
+                                    Some(val) => val,
+                                };
+                                match curchar {
+                                    b',' => break,
+                                    b')' => return Ok((is_function, function_name, function_args)),
+                                    somethingelse => return Err(JinjaError::SyntaxError(&*format!("Expected comma or closing parentheses, got \"{}\"", char::from(somethingelse))))
+                                }
+                            }
+                            string_lit.push(curchar.into());
+                        }
+                        function_args.push(string_lit)
+                    } else {
+                        // It's a variable, start reading it...
+                        let curchar = match varname_chars.pop_front() {
+                            None => return Err(JinjaError::SyntaxError("Unclosed parentheses")),
+                            Some(val) => val,
+                        };
+                    }
+                }
             }
         }
+        function_name.push(curchar.into())
     }
     unreachable!();
 }
@@ -89,7 +128,7 @@ pub fn render_template_string<'a>(
     template: String,
     variables: HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
-) -> Result<String, JinjaError<'a>> {
+) -> Result<String, JinjaError> {
     let mut rendered = String::new();
     let simple_variable = match Regex::new(consts::REPLACE) {
         Err(why) => {
