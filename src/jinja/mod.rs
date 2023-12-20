@@ -146,7 +146,7 @@ pub fn render_template_string<'a>(
     variables: HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
 ) -> Result<String, JinjaError> {
-    let mut rendered = String::new();
+    let mut rendered = template.clone();
     let simple_variable = match Regex::new(consts::REPLACE) {
         Err(why) => {
             return Err(JinjaError::InternalJinjaError(
@@ -182,8 +182,9 @@ pub fn render_template_string<'a>(
                 None => return Err(JinjaError::NoSuchVariable),
                 Some(val) => val,
             };
-            rendered = template.replace(&variable[0], variable_value);
+            rendered = rendered.replace(&variable[0], variable_value);
         };
+        return Ok(rendered);
     }
 
     Ok(rendered)
