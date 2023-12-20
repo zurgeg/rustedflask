@@ -3,10 +3,11 @@ mod consts;
 use regex::Regex;
 
 use std::{
+    any::Any,
     collections::{HashMap, VecDeque},
     fs::File,
     io::Read,
-    path::Path, any::Any,
+    path::Path,
 };
 
 /// A function that can be passed to a Jinja template
@@ -91,27 +92,45 @@ fn parse_replace<'a>(
                         // Start parsing a string literal
                         loop {
                             let curchar = match varname_chars.pop_front() {
-                                None => return Err(JinjaError::SyntaxError("Unclosed string literal".into())),
+                                None => {
+                                    return Err(JinjaError::SyntaxError(
+                                        "Unclosed string literal".into(),
+                                    ))
+                                }
                                 Some(val) => val,
                             };
-                            if curchar == b'"'{
+                            if curchar == b'"' {
                                 let curchar = match varname_chars.pop_front() {
-                                    None => return Err(JinjaError::SyntaxError("Unclosed parentheses".into())),
+                                    None => {
+                                        return Err(JinjaError::SyntaxError(
+                                            "Unclosed parentheses".into(),
+                                        ))
+                                    }
                                     Some(val) => val,
                                 };
                                 match curchar {
                                     b',' => break,
                                     b')' => return Ok((is_function, function_name, function_args)),
-                                    somethingelse => return Err(JinjaError::SyntaxError(format!("Expected comma or closing parentheses, got \"{}\"", char::from(somethingelse))).into())
+                                    somethingelse => {
+                                        return Err(JinjaError::SyntaxError(format!(
+                                            "Expected comma or closing parentheses, got \"{}\"",
+                                            char::from(somethingelse)
+                                        ))
+                                        .into())
+                                    }
                                 }
                             }
                             string_lit.push(curchar.into());
                         }
                         function_args.push(string_lit)
+                    } else if curchar == b')' {
+                        return Ok((is_function, function_name, function_args));
                     } else {
                         // It's a variable, start reading it...
                         let curchar = match varname_chars.pop_front() {
-                            None => return Err(JinjaError::SyntaxError("Unclosed parentheses".into())),
+                            None => {
+                                return Err(JinjaError::SyntaxError("Unclosed parentheses".into()))
+                            }
                             Some(val) => val,
                         };
                     }
