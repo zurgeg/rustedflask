@@ -160,22 +160,23 @@ pub fn render_template_string<'a>(
         let variable = &entry;
         let varname = &variable["variable"];
 
-        let (is_function, function_name, function_args) = match parse_replace(varname, &variables, functions.clone()) {
-            Err(why) => return Err(why),
-            Ok(value) => value
-        };
+        let (is_function, function_name, function_args) =
+            match parse_replace(varname, &variables, functions.clone()) {
+                Err(why) => return Err(why),
+                Ok(value) => value,
+            };
         if is_function {
             match functions {
                 Some(ref functions) => {
                     let functions = functions.clone();
                     let function = match functions.get(&*function_name) {
                         Some(function) => function,
-                        None => return Err(JinjaError::NoSuchFunction)
+                        None => return Err(JinjaError::NoSuchFunction),
                     };
                     let value = function(function_args);
                     rendered = rendered.replace(&variable[0], &*value);
-                },
-                None => return Err(JinjaError::NoSuchFunction)
+                }
+                None => return Err(JinjaError::NoSuchFunction),
             }
         } else {
             let variable_value = match variables.get(&varname) {

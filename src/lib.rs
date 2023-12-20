@@ -99,7 +99,7 @@ mod tests {
         functions.insert("function", test_function);
         let rendered = match render_template_string(template, HashMap::new(), Some(functions)) {
             Err(why) => return Err(why),
-            Ok(response) => response
+            Ok(response) => response,
         };
         assert_eq!(rendered, "works".to_string());
         Ok(())
