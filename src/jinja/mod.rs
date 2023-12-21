@@ -69,7 +69,6 @@ fn parse_replace<'a>(
     varname: &str,
     variables: &HashMap<&'a str, String>,
 ) -> Result<(bool, String, Vec<String>), JinjaError> {
-    puffin::profile_function!();
     let mut is_function = false;
     let mut function_name = String::new();
     let mut function_args = Vec::<String>::new();
@@ -184,7 +183,6 @@ pub fn render_template_string<'a>(
     variables: HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
 ) -> Result<String, JinjaError> {
-    puffin::profile_function!();
     let mut rendered = template.clone();
     let simple_variable = match Regex::new(consts::REPLACE) {
         Err(why) => {
@@ -225,7 +223,6 @@ pub fn render_template_string<'a>(
     let extends = extend.captures(&temp_render_clone);
 
     if let Some(parents) = extends {
-        puffin::profile_scope!("extend");
         let filename = Path::new("./templates/").join(Path::new(&parents["filename"]));
         let mut file = match File::open(filename) {
             Err(_) => return Err(JinjaError::NoSuchTemplate),
@@ -260,7 +257,6 @@ pub fn render_template_string<'a>(
     }
 
     for entry in inclusion.captures_iter(&rendered.clone()) {
-        puffin::profile_scope!("include");
         let filename = Path::new("./templates/").join(Path::new(&entry["filename"]));
         let mut file = match File::open(filename) {
             Err(_) => return Err(JinjaError::NoSuchTemplate),
@@ -276,7 +272,6 @@ pub fn render_template_string<'a>(
     }
 
     for entry in simple_variable.captures_iter(&rendered.clone()) {
-        puffin::profile_scope!("variable_expansion");
         let variable = &entry;
         let varname = &variable["variable"];
 
@@ -285,7 +280,6 @@ pub fn render_template_string<'a>(
             Ok(value) => value,
         };
         if is_function {
-            puffin::profile_scope!("function_expansion");
             match functions {
                 Some(ref functions) => {
                     let functions = functions.clone();
@@ -317,7 +311,6 @@ pub fn render_template<'a>(
     variables: HashMap<&'a str, String>,
     functions: Option<HashMap<&'a str, JinjaFunction>>,
 ) -> Result<String, JinjaError> {
-    puffin::profile_function!();
     // Variables are <&str, String> because the key is more likely to be
     // a string const, and the value is more likely to be dynamically generated
     let fpath = Path::new("./templates/").join(file);
