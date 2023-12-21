@@ -1,7 +1,5 @@
 mod consts;
 
-use regex::Regex;
-
 use std::{
     collections::{HashMap, VecDeque},
     fs::File,
@@ -184,40 +182,13 @@ pub fn render_template_string<'a>(
     functions: Option<HashMap<&'a str, JinjaFunction>>,
 ) -> Result<String, JinjaError> {
     let mut rendered = template.clone();
-    let simple_variable = match Regex::new(consts::REPLACE) {
-        Err(why) => {
-            return Err(JinjaError::InternalJinjaError(
-                InternalJinjaError::CantReadRegex(why),
-            ))
-        }
-        Ok(regex) => regex,
-    };
-    let inclusion = match Regex::new(consts::INCLUDE) {
-        Err(why) => {
-            return Err(JinjaError::InternalJinjaError(
-                InternalJinjaError::CantReadRegex(why),
-            ))
-        }
-        Ok(regex) => regex,
-    };
+    let simple_variable = &consts::REPLACE;
 
-    let extend = match Regex::new(consts::EXTEND) {
-        Err(why) => {
-            return Err(JinjaError::InternalJinjaError(
-                InternalJinjaError::CantReadRegex(why),
-            ))
-        }
-        Ok(regex) => regex,
-    };
+    let inclusion = &consts::INCLUDE;
 
-    let block = match Regex::new(consts::BLOCK) {
-        Err(why) => {
-            return Err(JinjaError::InternalJinjaError(
-                InternalJinjaError::CantReadRegex(why),
-            ))
-        }
-        Ok(regex) => regex,
-    };
+    let extend = &consts::EXTEND;
+
+    let block = &consts::BLOCK;
 
     let temp_render_clone = rendered.clone();
     let extends = extend.captures(&temp_render_clone);
