@@ -1,13 +1,9 @@
 use std::collections::HashMap;
 
 use rustedflask::{
+    core::http::{HTTPRequest, HTTPResponse, HttpStatusCodes},
     flask::App,
     jinja::render_template,
-    core::http::{
-        HTTPRequest,
-        HTTPResponse,
-        HttpStatusCodes
-    }
 };
 
 fn main_route(_request: HTTPRequest) -> HTTPResponse {
@@ -21,10 +17,12 @@ fn template_route(_request: HTTPRequest) -> HTTPResponse {
     match render_template(template_name, variables, None) {
         Ok(content) => HTTPResponse::from(&*content),
         // Build an error page
-        Err(why) => HTTPResponse::new().
-        with_statuscode(HttpStatusCodes::InternalServerError, 
-            Box::new(b"Internal Server Error".to_owned())).
-        with_content(format!("{:?}", why).into())
+        Err(why) => HTTPResponse::new()
+            .with_statuscode(
+                HttpStatusCodes::InternalServerError,
+                Box::new(b"Internal Server Error".to_owned()),
+            )
+            .with_content(format!("{:?}", why).into()),
     }
 }
 
