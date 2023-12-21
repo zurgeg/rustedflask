@@ -65,7 +65,7 @@ pub enum JinjaError {
 }
 fn parse_replace<'a>(
     varname: &str,
-    variables: &HashMap<&'a str, String>
+    variables: &HashMap<&'a str, String>,
 ) -> Result<(bool, String, Vec<String>), JinjaError> {
     let mut is_function = false;
     let mut function_name = String::new();
@@ -203,7 +203,7 @@ pub fn render_template_string<'a>(
         let filename = Path::new("./templates/").join(Path::new(&entry["filename"]));
         let mut file = match File::open(filename) {
             Err(_) => return Err(JinjaError::NoSuchTemplate),
-            Ok(file) => file
+            Ok(file) => file,
         };
 
         let mut contents = String::new();
@@ -218,11 +218,10 @@ pub fn render_template_string<'a>(
         let variable = &entry;
         let varname = &variable["variable"];
 
-        let (is_function, function_name, function_args) =
-            match parse_replace(varname, &variables) {
-                Err(why) => return Err(why),
-                Ok(value) => value,
-            };
+        let (is_function, function_name, function_args) = match parse_replace(varname, &variables) {
+            Err(why) => return Err(why),
+            Ok(value) => value,
+        };
         if is_function {
             match functions {
                 Some(ref functions) => {
