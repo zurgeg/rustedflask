@@ -6,4 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rustedflask = { version = "1.1.0", path = "..", features = ["all"] }
+rustedflask = { version = "*", path = "..", features = ["all"] }
