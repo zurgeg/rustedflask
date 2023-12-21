@@ -240,10 +240,12 @@ pub fn render_template_string<'a>(
             let child_blocks = block.captures_iter(&*temp_render_clone);
             let mut child_map = HashMap::new();
             for block in child_blocks {
-                child_map.insert(block["blockname"].to_string(), block["content"].to_string());
+                child_map.insert(block["blockname"].to_string(), block["blockcontent"].to_string());
             };
             for block in parent_blocks {
+                println!("Trying to find block {}", &block[0]);
                 if let Some(child_block) = child_map.get(&block["blockname"].to_string()) {
+                    println!("Trying to find block {}", &block[0]);
                     contents = temp_contents_clone.replace(&block[0], &*child_block)
                 }
             }
