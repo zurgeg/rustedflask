@@ -243,15 +243,12 @@ pub fn render_template_string<'a>(
                 child_map.insert(block["blockname"].to_string(), block["blockcontent"].to_string());
             };
             for block in parent_blocks {
-                println!("Trying to find block {}", &block[0]);
                 if let Some(child_block) = child_map.get(&block["blockname"].to_string()) {
-                    println!("Trying to find block {}", &block[0]);
                     contents = temp_contents_clone.replace(&block[0], &*child_block)
                 }
             }
         }
-
-        rendered = temp_render_clone.replace(&parents[0], &*contents);
+        rendered = temp_render_clone.replace(&parents[0], &*contents).replace(&parents["strip"], "");
 
     }
 
