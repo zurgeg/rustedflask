@@ -60,6 +60,8 @@ pub enum JinjaError {
     SyntaxError(String),
     /// The template could not be opened
     NoSuchTemplate,
+    /// There were more than two parents in the template
+    MultipleParentsError,
     /// An other error occured
     Other(String),
 }
@@ -198,6 +200,58 @@ pub fn render_template_string<'a>(
         }
         Ok(regex) => regex,
     };
+
+    let extend = match Regex::new(consts::EXTEND) {
+        Err(why) => {
+            return Err(JinjaError::InternalJinjaError(
+                InternalJinjaError::CantReadRegex(why),
+            ))
+        }
+        Ok(regex) => regex,
+    };
+
+    let block = match Regex::new(consts::BLOCK) {
+        Err(why) => {
+            return Err(JinjaError::InternalJinjaError(
+                InternalJinjaError::CantReadRegex(why),
+            ))
+        }
+        Ok(regex) => regex,
+    };
+
+    let temp_render_clone = rendered.clone();
+    let extends = extend.captures(&temp_render_clone);
+
+    if let Some(parents) = extends {
+        let filename = Path::new("./templates/").join(Path::new(&parents["filename"]));
+        let mut file = match File::open(filename) {
+            Err(_) => return Err(JinjaError::NoSuchTemplate),
+            Ok(file) => file,
+        };
+
+        let mut contents = String::new();
+        match file.read_to_string(&mut contents) {
+            Err(_) => return Err(JinjaError::Other("Could not read template file".into())),
+            Ok(_) => {}
+        };
+        {
+            let temp_contents_clone = contents.clone();
+            let parent_blocks = block.captures_iter(&*temp_contents_clone);
+            let child_blocks = block.captures_iter(&*temp_render_clone);
+            let mut child_map = HashMap::new();
+            for block in child_blocks {
+                child_map.insert(block["blockname"].to_string(), block["content"].to_string());
+            };
+            for block in parent_blocks {
+                if let Some(child_block) = child_map.get(&block["blockname"].to_string()) {
+                    contents = temp_contents_clone.replace(&block[0], &*child_block)
+                }
+            }
+        }
+
+        rendered = temp_render_clone.replace(&parents[0], &*contents);
+
+    }
 
     for entry in inclusion.captures_iter(&rendered.clone()) {
         let filename = Path::new("./templates/").join(Path::new(&entry["filename"]));
