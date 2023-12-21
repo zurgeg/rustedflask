@@ -26,6 +26,18 @@ fn template_route(_request: HTTPRequest) -> HTTPResponse {
     }
 }
 
+fn inheritance_route(_request: HTTPRequest) -> HTTPResponse {
+    match render_template("inheritance.html.jinja2", HashMap::new(), None) {
+        Ok(content) => HTTPResponse::from(&*content),
+        Err(why) => HTTPResponse::new()
+            .with_statuscode(
+                HttpStatusCodes::InternalServerError,
+                Box::new(b"Internal Server Error".to_owned()),
+            )
+            .with_content(format!("{:?}", why).into()),
+    }
+}
+
 fn route_you_can_only_post_to(_request: HTTPRequest) -> HTTPResponse {
     "You can only use the POST method to access this route".into()
 }
@@ -34,6 +46,7 @@ fn main() {
     let mut app = App::new("example".to_string());
     app.route("/", main_route);
     app.route("/template", template_route);
+    app.route("/inheritance", inheritance_route);
     app.route_with_allowed_methods("/postonly", route_you_can_only_post_to, vec!["POST".to_string()]);
 
     app.run("0.0.0.0:5000");
