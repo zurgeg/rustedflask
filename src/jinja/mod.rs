@@ -70,6 +70,10 @@ pub enum JinjaError {
 }
 
 impl JinjaState {
+    /// Creates a new JinjaState
+    pub fn new() -> Self {
+        JinjaState { file_cache: HashMap::new() }
+    }
     fn get_file(&mut self, path: String) -> Result<String, JinjaError> {
         match self.file_cache.clone().get(&path) {
             Some(file) => Ok(file.to_string()),
