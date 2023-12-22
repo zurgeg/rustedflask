@@ -2,7 +2,7 @@ mod consts;
 
 use std::{
     collections::{HashMap, VecDeque},
-    fs::File,
+    fs::{File, read_to_string},
     io::Read,
     path::Path,
 };
@@ -29,6 +29,11 @@ use std::{
 /// }
 /// ```
 pub type JinjaFunction = fn(Vec<String>) -> String;
+
+/// An internal state for Jinja. Mostly stores cache related things
+pub struct JinjaState {
+    file_cache: HashMap<String, String>
+}
 
 /// An error from within Jinja.
 ///
@@ -63,6 +68,134 @@ pub enum JinjaError {
     /// An other error occured
     Other(String),
 }
+
+impl JinjaState {
+    fn get_file(&mut self, path: String) -> Result<String, JinjaError> {
+        match self.file_cache.clone().get(&path) {
+            Some(file) => Ok(file.to_string()),
+            None => {
+                let result = read_to_string(&*path);
+                match result {
+                    Ok(contents) => {
+                        self.file_cache.insert(path, contents.clone());
+                        Ok(contents)
+                    }
+                    Err(why) => {
+                        Err(JinjaError::Other(format!("Can't read template: {}", why)))
+                    }
+                }
+            }
+        }
+    }
+    
+    /// A version of `render_template_string` that takes advantage of
+    /// template caching
+    pub fn render_template_string<'a>(
+        &mut self,
+        template: String,
+        variables: &HashMap<&'a str, String>,
+        functions: Option<HashMap<&'a str, JinjaFunction>>
+    ) -> Result<String, JinjaError> {
+        let mut rendered = template.clone();
+        let simple_variable = &consts::REPLACE;
+
+        let inclusion = &consts::INCLUDE;
+
+        let extend = &consts::EXTEND;
+
+        let block = &consts::BLOCK;
+
+        let temp_render_clone = rendered.clone();
+        let extends = extend.captures(&temp_render_clone);
+
+        if let Some(parents) = extends {
+            let mut contents = match self.get_file(Path::new("./templates/").join(Path::new(&parents["filename"])).to_str().unwrap().to_string()) {
+                Ok(contents) => contents,
+                Err(why) => return Err(why)
+            };
+            {
+                let temp_contents_clone = contents.clone();
+                let parent_blocks = block.captures_iter(&*temp_contents_clone);
+                let child_blocks = block.captures_iter(&*temp_render_clone);
+                let mut child_map = HashMap::new();
+                for block in child_blocks {
+                    child_map.insert(
+                        block["blockname"].to_string(),
+                        block["blockcontent"].to_string(),
+                    );
+                }
+                for block in parent_blocks {
+                    if let Some(child_block) = child_map.get(&block["blockname"].to_string()) {
+                        contents = temp_contents_clone.replace(&block[0], &*child_block)
+                    }
+                }
+            }
+            rendered = temp_render_clone
+                .replace(&parents[0], &*contents)
+                .replace(&parents["strip"], "");
+        }
+
+        for entry in inclusion.captures_iter(&rendered.clone()) {
+            let contents = match self.get_file(Path::new("./templates/").join(Path::new(&entry["filename"])).to_str().unwrap().to_string()) {
+                Ok(contents) => contents,
+                Err(why) => return Err(why)
+            };
+            rendered = rendered.replace(&entry[0], &*contents);
+        }
+
+        for entry in simple_variable.captures_iter(&rendered.clone()) {
+            let variable = &entry;
+            let varname = &variable["variable"];
+
+            let (is_function, function_name, function_args) = match parse_replace(varname, &variables) {
+                Err(why) => return Err(why),
+                Ok(value) => value,
+            };
+            if is_function {
+                match functions {
+                    Some(ref functions) => {
+                        let functions = functions.clone();
+                        let function = match functions.get(&*function_name) {
+                            Some(function) => function,
+                            None => return Err(JinjaError::NoSuchFunction),
+                        };
+                        let value = function(function_args);
+                        rendered = rendered.replace(&variable[0], &*value);
+                    }
+                    None => return Err(JinjaError::NoSuchFunction),
+                }
+            } else {
+                let variable_value = match variables.get(&varname) {
+                    None => return Err(JinjaError::NoSuchVariable),
+                    Some(val) => val,
+                };
+                rendered = rendered.replace(&variable[0], variable_value);
+            };
+            return Ok(rendered);
+        }
+
+        Ok(rendered)
+    }
+    
+    /// A version of `render_template` that takes advantage of
+    /// template caching
+    pub fn render_template<'a>(
+        &mut self,
+        file: &'a str,
+        variables: HashMap<&'a str, String>,
+        functions: Option<HashMap<&'a str, JinjaFunction>>,
+    ) -> Result<String, JinjaError> {
+        // Variables are <&str, String> because the key is more likely to be
+        // a string const, and the value is more likely to be dynamically generated
+        let contents = match self.get_file(Path::new("./templates/").join(Path::new(file)).to_str().unwrap().to_string()) {
+            Ok(contents) => contents,
+            Err(why) => return Err(why)
+        };
+    
+        return render_template_string(contents, variables, functions);
+    }
+}
+
 fn parse_replace<'a>(
     varname: &str,
     variables: &HashMap<&'a str, String>,
