@@ -79,7 +79,7 @@ impl App {
                     buf[0] = byte;
                     let err = client.write(buf);
                     if err.is_err() {
-                        panic!("{:?}", err.unwrap_err())
+                        println!("Erorr sending data to client: {:?}", err.unwrap_err())
                     };
                 }
             };
