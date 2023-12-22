@@ -10,13 +10,19 @@ macro_rules! load_regex {
                 Ok(regex) => regex,
             };
         }
-    }
+    };
 }
 
 load_regex!(REPLACE, r#"\{\{ (?P<variable>.*) \}\}"#);
 
 load_regex!(INCLUDE, r#"\{% include "(?P<filename>.*)" %\}"#);
 
-load_regex!(EXTEND, r#"\{% extends "(?P<filename>.*)" %\}(?P<strip>(.|\n)*)"#);
+load_regex!(
+    EXTEND,
+    r#"\{% extends "(?P<filename>.*)" %\}(?P<strip>(.|\n)*)"#
+);
 
-load_regex!(BLOCK, r"(?ms)\{% block (?P<blockname>.*) %\}\n?(?P<blockcontent>.*)\n?\{% endblock %\}");
+load_regex!(
+    BLOCK,
+    r"(?ms)\{% block (?P<blockname>.*) %\}\n?(?P<blockcontent>.*)\n?\{% endblock %\}"
+);
