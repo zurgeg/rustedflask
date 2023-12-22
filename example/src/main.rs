@@ -47,7 +47,11 @@ fn main() {
     app.route("/", main_route);
     app.route("/template", template_route);
     app.route("/inheritance", inheritance_route);
-    app.route_with_allowed_methods("/postonly", route_you_can_only_post_to, vec!["POST".to_string()]);
+    app.route_with_allowed_methods(
+        "/postonly",
+        route_you_can_only_post_to,
+        vec!["POST".to_string()],
+    );
 
     app.run("0.0.0.0:5000");
     panic!("Couldn't run");
