@@ -2,7 +2,7 @@ mod consts;
 
 use std::{
     collections::{HashMap, VecDeque},
-    fs::{File, read_to_string},
+    fs::{read_to_string, File},
     io::Read,
     path::Path,
 };
@@ -32,7 +32,7 @@ pub type JinjaFunction = fn(Vec<String>) -> String;
 
 /// An internal state for Jinja. Mostly stores cache related things
 pub struct JinjaState {
-    file_cache: HashMap<String, String>
+    file_cache: HashMap<String, String>,
 }
 
 /// An error from within Jinja.
@@ -72,7 +72,9 @@ pub enum JinjaError {
 impl JinjaState {
     /// Creates a new JinjaState
     pub fn new() -> Self {
-        JinjaState { file_cache: HashMap::new() }
+        JinjaState {
+            file_cache: HashMap::new(),
+        }
     }
     fn get_file(&mut self, path: String) -> Result<String, JinjaError> {
         match self.file_cache.clone().get(&path) {
@@ -84,21 +86,19 @@ impl JinjaState {
                         self.file_cache.insert(path, contents.clone());
                         Ok(contents)
                     }
-                    Err(why) => {
-                        Err(JinjaError::Other(format!("Can't read template: {}", why)))
-                    }
+                    Err(why) => Err(JinjaError::Other(format!("Can't read template: {}", why))),
                 }
             }
         }
     }
-    
+
     /// A version of `render_template_string` that takes advantage of
     /// template caching
     pub fn render_template_string<'a>(
         &mut self,
         template: String,
         variables: &HashMap<&'a str, String>,
-        functions: Option<HashMap<&'a str, JinjaFunction>>
+        functions: Option<HashMap<&'a str, JinjaFunction>>,
     ) -> Result<String, JinjaError> {
         let mut rendered = template.clone();
         let simple_variable = &consts::REPLACE;
@@ -113,9 +113,15 @@ impl JinjaState {
         let extends = extend.captures(&temp_render_clone);
 
         if let Some(parents) = extends {
-            let mut contents = match self.get_file(Path::new("./templates/").join(Path::new(&parents["filename"])).to_str().unwrap().to_string()) {
+            let mut contents = match self.get_file(
+                Path::new("./templates/")
+                    .join(Path::new(&parents["filename"]))
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            ) {
                 Ok(contents) => contents,
-                Err(why) => return Err(why)
+                Err(why) => return Err(why),
             };
             {
                 let temp_contents_clone = contents.clone();
@@ -140,9 +146,15 @@ impl JinjaState {
         }
 
         for entry in inclusion.captures_iter(&rendered.clone()) {
-            let contents = match self.get_file(Path::new("./templates/").join(Path::new(&entry["filename"])).to_str().unwrap().to_string()) {
+            let contents = match self.get_file(
+                Path::new("./templates/")
+                    .join(Path::new(&entry["filename"]))
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            ) {
                 Ok(contents) => contents,
-                Err(why) => return Err(why)
+                Err(why) => return Err(why),
             };
             rendered = rendered.replace(&entry[0], &*contents);
         }
@@ -151,10 +163,11 @@ impl JinjaState {
             let variable = &entry;
             let varname = &variable["variable"];
 
-            let (is_function, function_name, function_args) = match parse_replace(varname, &variables) {
-                Err(why) => return Err(why),
-                Ok(value) => value,
-            };
+            let (is_function, function_name, function_args) =
+                match parse_replace(varname, &variables) {
+                    Err(why) => return Err(why),
+                    Ok(value) => value,
+                };
             if is_function {
                 match functions {
                     Some(ref functions) => {
@@ -180,7 +193,7 @@ impl JinjaState {
 
         Ok(rendered)
     }
-    
+
     /// A version of `render_template` that takes advantage of
     /// template caching
     pub fn render_template<'a>(
@@ -191,11 +204,17 @@ impl JinjaState {
     ) -> Result<String, JinjaError> {
         // Variables are <&str, String> because the key is more likely to be
         // a string const, and the value is more likely to be dynamically generated
-        let contents = match self.get_file(Path::new("./templates/").join(Path::new(file)).to_str().unwrap().to_string()) {
+        let contents = match self.get_file(
+            Path::new("./templates/")
+                .join(Path::new(file))
+                .to_str()
+                .unwrap()
+                .to_string(),
+        ) {
             Ok(contents) => contents,
-            Err(why) => return Err(why)
+            Err(why) => return Err(why),
         };
-    
+
         return render_template_string(contents, variables, functions);
     }
 }
