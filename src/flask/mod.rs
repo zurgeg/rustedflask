@@ -12,6 +12,7 @@ pub type RouteFn = fn(request: HTTPRequest) -> HTTPResponse;
 struct Route {
     pub path: String,
     pub func: RouteFn,
+    pub allowed_methods: Vec<String>,
 }
 
 /// An app (similar to Python's `flask.Flask`)
@@ -49,7 +50,6 @@ impl App {
         let route_string = String::from_utf8(proper_request_path);
 
         if route_string.is_err() {
-            // println!("route_string can't be converted!");
             return;
         }
 
@@ -85,15 +85,42 @@ impl App {
             };
             return;
         };
-
+        let methnotallowed_route = self.find_route_for_path("!405");
         thread::spawn(move || {
-            let response: Vec<u8> = (route.unwrap().func)(request).into();
-            let buf = &mut [0_u8];
-            for byte in response {
-                buf[0] = byte;
-                let err = client.write(buf);
-                if err.is_err() {
-                    panic!("{:?}", err.unwrap_err())
+            if route
+                .clone()
+                .unwrap()
+                .allowed_methods
+                .contains(&String::from_utf8(request.clone().method).unwrap())
+            {
+                let response: Vec<u8> = (route.unwrap().func)(request).into();
+                let buf = &mut [0_u8];
+                for byte in response {
+                    buf[0] = byte;
+                    let err = client.write(buf);
+                    if err.is_err() {
+                        panic!("{:?}", err.unwrap_err())
+                    }
+                }
+            } else {
+                let response = match methnotallowed_route {
+                    None => Vec::<u8>::from(
+                        HTTPResponse::new()
+                            .with_statuscode(
+                                HttpStatusCodes::MethodNotAllowed,
+                                Box::new(b"Method Not Allowed".to_owned()),
+                            )
+                            .with_content("405 Method Not Allowed".to_string().into_bytes()),
+                    ),
+                    Some(route) => Vec::<u8>::from((route.func)(request)),
+                };
+                let buf = &mut [0_u8];
+                for byte in response {
+                    buf[0] = byte;
+                    let err = client.write(buf);
+                    if err.is_err() {
+                        panic!("{:?}", err.unwrap_err())
+                    }
                 }
             }
         });
@@ -114,6 +141,24 @@ impl App {
         self.routes.push(Route {
             path: path.to_string(),
             func,
+            allowed_methods: vec!["GET".to_string()],
+        })
+    }
+
+    /// Same as route, but also allows you to set what methods are and aren't allowed
+    /// for this path
+    ///
+    /// Will be removed at some point and merged into the main `App.route` function
+    pub fn route_with_allowed_methods(
+        &mut self,
+        path: &str,
+        func: RouteFn,
+        allowed_methods: Vec<String>,
+    ) {
+        self.routes.push(Route {
+            path: path.to_string(),
+            func,
+            allowed_methods,
         })
     }
 

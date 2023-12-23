@@ -81,11 +81,51 @@ mod tests {
         let template = "{{ variable }}".to_string();
         let mut variables = HashMap::<&str, String>::new();
         variables.insert("variable", "works".to_string());
-        let rendered = match render_template_string(template, variables) {
+        let rendered = match render_template_string(template, variables, None) {
             Err(why) => return Err(why),
             Ok(response) => response,
         };
         assert_eq!(rendered, "works".to_string());
+        Ok(())
+    }
+    #[test]
+    #[cfg(feature = "jinja")]
+    fn test_jinja_function_no_args() -> Result<(), jinja::JinjaError> {
+        fn test_function(args: Vec<String>) -> String {
+            "works".to_string()
+        }
+        let template = "{{ function() }}".to_string();
+        let mut functions: HashMap<&str, jinja::JinjaFunction> = HashMap::new();
+        functions.insert("function", test_function);
+        let rendered = match render_template_string(template, HashMap::new(), Some(functions)) {
+            Err(why) => return Err(why),
+            Ok(response) => response,
+        };
+        assert_eq!(rendered, "works".to_string());
+        Ok(())
+    }
+
+    #[test]
+    #[cfg(feature = "jinja")]
+    fn test_jinja_function_args() -> Result<(), jinja::JinjaError> {
+        fn test_function(args: Vec<String>) -> String {
+            let mut return_val = args[0].clone();
+            return_val.extend(args[1].chars());
+            return_val.extend(args[2].chars());
+            return_val.extend(args[3].chars());
+            return_val
+        };
+        let template = r#"{{ function("works", "blah","hah", variable) }}"#.to_string();
+        let mut functions: HashMap<&str, jinja::JinjaFunction> = HashMap::new();
+        functions.insert("function", test_function);
+
+        let mut variables = HashMap::new();
+        variables.insert("variable", "gah".to_string());
+        let rendered = match render_template_string(template, variables, Some(functions)) {
+            Err(why) => return Err(why),
+            Ok(response) => response,
+        };
+        assert_eq!(rendered, "worksblahhahgah".to_string());
         Ok(())
     }
 }

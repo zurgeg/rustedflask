@@ -1,10 +1,9 @@
 # Rusted Flask roadmap
-## By 2.0.0
+## During 2.x.x
 ### Jinja
-- Functions in Jinja (~~implement~~, ~~test~~, pre-release testing) (branch: `jinja-function`)
-- Inclusion (`{% include "foo.jinja2.html" %}`) (implement, test, pre-release testing) (branch: `jinja-include`)
-### Flask
-- Other methods (`POST`/`PUT`/etc.,) (implement, test, pre-release testing)
+- `{% extends %}` and `{% block %}` (~~implement~~, ~~test~~, merge) (branch: `jinja-inheritance`)
+- `{% if %}` (implement, test, merge)
+- `{% for %}` (implement, test, merge)
 
 
 

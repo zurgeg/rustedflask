@@ -1,4 +1,4 @@
 **/target/
 .vscode
 
-flamegraph.svg
+example/flamegraph.svg
