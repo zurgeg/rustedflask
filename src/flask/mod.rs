@@ -6,7 +6,7 @@ use std::{
 };
 
 /// A callback function for when a route is accessed
-pub type RouteFn = fn(request: HTTPRequest) -> HTTPResponse;
+pub type RouteFn<'a> = &'a dyn Fn(HTTPRequest) -> HTTPResponse;
 
 #[derive(Clone)]
 struct Route {
