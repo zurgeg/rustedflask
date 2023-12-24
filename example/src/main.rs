@@ -1,9 +1,9 @@
-use std::{collections::HashMap, process::exit};
+use std::{collections::HashMap, process::exit, sync::{Arc, Mutex}};
 
 use rustedflask::{
     core::http::{HTTPRequest, HTTPResponse, HttpStatusCodes},
     flask::App,
-    jinja::render_template,
+    jinja::{render_template, JinjaState},
 };
 
 fn main_route(_request: HTTPRequest) -> HTTPResponse {
@@ -42,12 +42,38 @@ fn route_you_can_only_post_to(_request: HTTPRequest) -> HTTPResponse {
     "You can only use the POST method to access this route".into()
 }
 
+// This takes advantage of template caching, which speeds it up
+//
+// This comes at the disadvantage of stopping other cached routes from accessing
+// the state until it is done
+// 
+// Additionally, routes taking advantage of caching should do strict error checking
+// to prevent the mutex from being poisoned
+fn template_route_cached(ctx_unlocked: Arc<Mutex<JinjaState>>, _request: HTTPRequest) -> HTTPResponse {
+    let mut ctx = ctx_unlocked.lock().unwrap();
+    let template_name = "template.html.jinja2";
+    let mut variables = HashMap::new();
+    variables.insert("template_name", template_name.to_string());
+    match ctx.render_template(template_name, variables, None) {
+        Ok(content) => HTTPResponse::from(&*content),
+        // Build an error page
+        Err(why) => HTTPResponse::new()
+            .with_statuscode(
+                HttpStatusCodes::InternalServerError,
+                Box::new(b"Internal Server Error".to_owned()),
+            )
+            .with_content(format!("{:?}", why).into()),
+    }
+}
+
 fn shutdown(_request: HTTPRequest) -> HTTPResponse {
     exit(0);
 }
 
 fn main() {
     let mut app = App::new("example".to_string());
+    let jinja_state = JinjaState::new();
+    let ctx = Arc::new(Mutex::new(jinja_state));
     app.route("/", main_route);
     app.route("/template", template_route);
     app.route("/inheritance", inheritance_route);
@@ -58,10 +84,8 @@ fn main() {
         vec!["POST".to_string()],
     );
 
-    let captured_value = "Hello!";
-    
-    app.route("/closure", move  |_| {
-        format!("Hello! I'm a closure! Here's the value from outside of me: {}", captured_value).as_str().into()
+    app.route("/caching", move |request| {
+        template_route_cached(ctx.clone(), request)
     });
 
     app.run("0.0.0.0:5000");
