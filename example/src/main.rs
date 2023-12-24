@@ -58,6 +58,12 @@ fn main() {
         vec!["POST".to_string()],
     );
 
+    let captured_value = "Hello!";
+    
+    app.route("/closure", move  |_| {
+        format!("Hello! I'm a closure! Here's the value from outside of me: {}", captured_value).as_str().into()
+    });
+
     app.run("0.0.0.0:5000");
     panic!("Couldn't run");
 }
