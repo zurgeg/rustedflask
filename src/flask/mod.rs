@@ -2,11 +2,12 @@ use crate::core::http::{HTTPRequest, HTTPResponse, HttpStatusCodes};
 use std::{
     io::Write,
     net::{TcpListener, TcpStream},
+    sync::Arc,
     thread,
 };
 
 /// A callback function for when a route is accessed
-pub type RouteFn = fn(request: HTTPRequest) -> HTTPResponse;
+pub type RouteFn = Arc<Box<dyn Fn(HTTPRequest) -> HTTPResponse + Sync + Send>>;
 
 #[derive(Clone)]
 struct Route {
@@ -137,10 +138,14 @@ impl App {
 
     /// Creates a route for `path`, calling `func` when
     /// the route is accessed
-    pub fn route(&mut self, path: &str, func: RouteFn) {
+    pub fn route(
+        &mut self,
+        path: &str,
+        func: impl Fn(HTTPRequest) -> HTTPResponse + Sync + Send + 'static,
+    ) {
         self.routes.push(Route {
             path: path.to_string(),
-            func,
+            func: Arc::new(Box::new(func)),
             allowed_methods: vec!["GET".to_string()],
         })
     }
@@ -152,12 +157,12 @@ impl App {
     pub fn route_with_allowed_methods(
         &mut self,
         path: &str,
-        func: RouteFn,
+        func: impl Fn(HTTPRequest) -> HTTPResponse + Sync + Send + 'static,
         allowed_methods: Vec<String>,
     ) {
         self.routes.push(Route {
             path: path.to_string(),
-            func,
+            func: Arc::new(Box::new(func)),
             allowed_methods,
         })
     }
