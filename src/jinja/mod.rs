@@ -7,6 +7,17 @@ use std::{
     path::Path,
 };
 
+#[macro_export]
+/// Wrap a function that requires a Jinja context,
+/// passing the context to it
+macro_rules! wrap_context {
+    ($fn:ident, $ctx:ident) => {
+        move |request| {
+            $fn($ctx.clone(), request)
+        }
+    };
+}
+
 /// A function that can be passed to a Jinja template
 /// ### Warning
 /// Unlike in Python's Jinja, where functions are written like so:

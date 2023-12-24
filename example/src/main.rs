@@ -3,7 +3,7 @@ use std::{collections::HashMap, process::exit, sync::{Arc, Mutex}};
 use rustedflask::{
     core::http::{HTTPRequest, HTTPResponse, HttpStatusCodes},
     flask::App,
-    jinja::{render_template, JinjaState},
+    jinja::{render_template, JinjaState}, wrap_context,
 };
 
 fn main_route(_request: HTTPRequest) -> HTTPResponse {
@@ -84,9 +84,10 @@ fn main() {
         vec!["POST".to_string()],
     );
 
-    app.route("/caching", move |request| {
-        template_route_cached(ctx.clone(), request)
-    });
+    app.route("/caching", wrap_context!(
+        template_route_cached,
+        ctx
+    ));
 
     app.run("0.0.0.0:5000");
     panic!("Couldn't run");
