@@ -12,9 +12,7 @@ use std::{
 /// passing the context to it
 macro_rules! wrap_context {
     ($fn:ident, $ctx:ident) => {
-        move |request| {
-            $fn($ctx.clone(), request)
-        }
+        move |request| $fn($ctx.clone(), request)
     };
 }
 
